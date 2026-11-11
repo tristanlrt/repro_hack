@@ -9,7 +9,10 @@ include: "regles/index.smk"
 include: "regles/trimming.smk"
 include: "regles/mapping.smk"
 include: "regles/comptage.smk"
+include: "regles/deseq2.smk"
 
 rule all:
     input:
-        "results/counts/counts.txt"
+        "results/deseq2/resultats_deseq2.tsv",
+        "results/figures/ma_plot_complet.pdf",
+        "results/figures/ma_plot_traduction.pdf"

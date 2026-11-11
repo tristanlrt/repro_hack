@@ -32,3 +32,13 @@ rule telecharger_annotation:
         url=config["reference"]["gff_url"]
     shell:
         'wget -O {output} "{params.url}"'
+
+rule telecharger_kegg:
+    output:
+        "data/ref/kegg_{liste}.txt"
+    container:
+        config["containers"]["wget"]
+    params:
+        url=lambda wildcards: config["kegg"][wildcards.liste]
+    shell:
+        'wget -q -O {output} "{params.url}"'

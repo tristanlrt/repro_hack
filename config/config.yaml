@@ -6,6 +6,12 @@ reference:
   fasta_url: "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=CP000253.1&rettype=fasta"
   gff_url: "https://www.ncbi.nlm.nih.gov/sviewer/viewer.cgi?db=nuccore&report=gff3&id=CP000253.1"
 
+kegg:
+  genes: "https://rest.kegg.jp/list/sao"
+  ribosome: "https://rest.kegg.jp/link/sao/sao03010"
+  trna: "https://rest.kegg.jp/link/sao/sao00970"
+  facteurs: "https://rest.kegg.jp/get/br:sao03012"
+
 containers:
   sratoolkit: "https://zenodo.org/record/10894351/files/sratoolkit_3.1.0.img"
   wget: "https://zenodo.org/record/14415567/files/wget_1.24.5.img"
