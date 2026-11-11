@@ -1,0 +1,14 @@
+import pandas as pd
+
+configfile: "config/config.yaml"
+
+SAMPLES = pd.read_csv(config["samples"], sep="\t")["sample"].tolist()
+
+include: "regles/telechargement.smk"
+include: "regles/index.smk"
+
+rule all:
+    input:
+        expand("data/raw/{srr}.fastq.gz", srr=SAMPLES),
+        "data/ref/reference.gff",
+        multiext("results/index/reference", ".1.ebwt", ".2.ebwt", ".3.ebwt", ".4.ebwt", ".rev.1.ebwt", ".rev.2.ebwt")
