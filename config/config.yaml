@@ -12,4 +12,4 @@ containers:
   cutadapt: "docker://tristanlrt/cutadapt:1.11"
   subread: "docker://tristanlrt/subread:1.4.6-p3"
   bowtie: "docker://tristanlrt/bowtie:0.12.7"
-  deseq2: ""
+  deseq2: "docker://tristanlrt/deseq2:1.16"
