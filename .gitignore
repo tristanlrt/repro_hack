@@ -5,3 +5,4 @@ logs/
 *.img
 *.sif
 .DS_Store
+*.log

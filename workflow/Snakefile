@@ -6,9 +6,10 @@ SAMPLES = pd.read_csv(config["samples"], sep="\t")["sample"].tolist()
 
 include: "regles/telechargement.smk"
 include: "regles/index.smk"
+include: "regles/trimming.smk"
+include: "regles/mapping.smk"
+include: "regles/comptage.smk"
 
 rule all:
     input:
-        expand("data/raw/{srr}.fastq.gz", srr=SAMPLES),
-        "data/ref/reference.gff",
-        multiext("results/index/reference", ".1.ebwt", ".2.ebwt", ".3.ebwt", ".4.ebwt", ".rev.1.ebwt", ".rev.2.ebwt")
+        "results/counts/counts.txt"
