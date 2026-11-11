@@ -1,7 +1,7 @@
-sample    condition    replicate
-SRR10379721    persister    1
-SRR10379722    persister    2
-SRR10379723    persister    3
-SRR10379724    control    1
-SRR10379725    control    2
-SRR10379726    control    3
+sample	condition	replicate
+SRR10379721	persister	1
+SRR10379722	persister	2
+SRR10379723	persister	3
+SRR10379724	control	1
+SRR10379725	control	2
+SRR10379726	control	3
