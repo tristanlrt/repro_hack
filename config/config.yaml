@@ -11,5 +11,5 @@ containers:
   wget: "https://zenodo.org/record/14415567/files/wget_1.24.5.img"
   cutadapt: "docker://tristanlrt/cutadapt:1.11"
   subread: "docker://tristanlrt/subread:1.4.6-p3"
-  bowtie: ""
+  bowtie: "docker://tristanlrt/bowtie:0.12.7"
   deseq2: ""
