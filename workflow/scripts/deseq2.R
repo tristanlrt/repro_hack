@@ -4,13 +4,14 @@ args <- commandArgs(trailingOnly = TRUE)
 fichier_counts <- args[1]
 fichier_samples <- args[2]
 fichier_genes <- args[3]
-fichier_ribosome <- args[4]
-fichier_trna <- args[5]
-fichier_facteurs <- args[6]
-sortie_table <- args[7]
-sortie_resume <- args[8]
-sortie_ma_complet <- args[9]
-sortie_ma_traduction <- args[10]
+fichier_noms <- args[4]
+fichier_ribosome <- args[5]
+fichier_trna <- args[6]
+fichier_facteurs <- args[7]
+sortie_table <- args[8]
+sortie_resume <- args[9]
+sortie_ma_complet <- args[10]
+sortie_ma_traduction <- args[11]
 
 counts <- read.table(fichier_counts, header = TRUE, sep = "\t", comment.char = "#", row.names = 1, check.names = FALSE)
 counts <- counts[, 6:ncol(counts)]
@@ -27,7 +28,9 @@ res <- results(dds, alpha = 0.05)
 
 genes <- read.delim(fichier_genes, header = FALSE, quote = "", stringsAsFactors = FALSE)
 genes$id <- sub("^sao:", "", genes$V1)
-genes$nom <- ifelse(grepl(";", genes$V4), sub(";.*", "", genes$V4), NA)
+
+noms <- read.delim(fichier_noms, quote = "", stringsAsFactors = FALSE)
+noms$nom <- ifelse(noms[, 2] == "-", noms[, 3], noms[, 2])
 
 ribosome <- sub("^sao:", "", read.delim(fichier_ribosome, header = FALSE, stringsAsFactors = FALSE)$V2)
 trna <- sub("^sao:", "", read.delim(fichier_trna, header = FALSE, stringsAsFactors = FALSE)$V2)
@@ -36,7 +39,7 @@ facteurs <- unlist(regmatches(lignes_facteurs, gregexpr("SAOUHSC_[0-9A-Za-z]+", 
 cds <- genes$id[genes$V2 == "CDS"]
 traduction <- intersect(unique(c(ribosome, trna, facteurs)), cds)
 
-table <- data.frame(gene = rownames(res), nom = genes$nom[match(rownames(res), genes$id)], as.data.frame(res), stringsAsFactors = FALSE)
+table <- data.frame(gene = rownames(res), nom = noms$nom[match(rownames(res), noms[, 1])], as.data.frame(res), stringsAsFactors = FALSE)
 table$traduction <- table$gene %in% traduction
 write.table(table, sortie_table, sep = "\t", quote = FALSE, row.names = FALSE)
 
@@ -55,22 +58,63 @@ resume <- c(
 )
 writeLines(resume, sortie_resume)
 
+ok <- res$baseMean > 0 & !is.na(res$log2FoldChange)
+m <- res$baseMean[ok]
+lfc <- res$log2FoldChange[ok]
+s <- sig[ok]
+haut <- lfc > 4
+bas <- lfc < -4
+lfc <- pmax(pmin(lfc, 4), -4)
+couleur <- ifelse(s, rgb(1, 0, 0, 0.6), rgb(0, 0, 0, 0.6))
+forme <- ifelse(haut, 17, ifelse(bas, 25, 16))
+
 pdf(sortie_ma_complet, width = 7, height = 6)
-plotMA(res, alpha = 0.05, ylim = c(-4, 4), main = "MA-plot persisters vs control")
+par(mar = c(5, 5, 2, 2))
+plot(m, lfc, log = "x", type = "n", ylim = c(-4.2, 4.2), xaxt = "n", yaxt = "n", bty = "n",
+     xlab = "Mean of normalized counts", ylab = expression(log[2] ~ "fold change"))
+u <- par("usr")
+rect(10^u[1], u[3], 10^u[2], u[4], col = "grey92", border = NA)
+abline(v = 10^seq(-1, 5, 1), col = "grey97", lwd = 0.5)
+abline(h = seq(-3, 3, 2), col = "grey97", lwd = 0.5)
+abline(v = 10^seq(0, 4, 2), h = seq(-4, 4, 2), col = "white", lwd = 1.2)
+abline(h = 0, lty = 2, col = "grey40")
+points(m, lfc, pch = forme, col = couleur, bg = couleur, cex = ifelse(haut | bas, 0.6, 0.4))
+axis(1, at = 10^c(0, 2, 4), labels = expression(10^0, 10^2, 10^4), col = NA, col.ticks = "grey40")
+axis(2, at = seq(-4, 4, 2), las = 1, col = NA, col.ticks = "grey40")
 dev.off()
 
 t <- table[trad & !is.na(table$baseMean) & table$baseMean > 0, ]
 t_sig <- !is.na(t$padj) & t$padj < 0.05
-t_facteur <- t$gene %in% facteurs
 t_trna <- t$gene %in% trna
-pdf(sortie_ma_traduction, width = 7, height = 6)
-plot(log2(t$baseMean), t$log2FoldChange, pch = 20, col = ifelse(t_sig, "red", "grey50"),
-     xlim = c(0, 20), ylim = c(-6, 5), xaxs = "i", yaxs = "i", xaxt = "n", yaxt = "n",
-     xlab = "log2 base Mean", ylab = "log2 Fold Change", main = "Genes de la traduction")
+x <- log2(t$baseMean)
+y <- t$log2FoldChange
+
+etiquettes <- data.frame(
+  nom = c("frr", "infA", "tsf", "infC", "infB", "pth"),
+  dx = c(-1.5, -1, 2, 3, 3, -4),
+  dy = c(2, 2.5, 1.5, 0, -0.5, -0.5),
+  stringsAsFactors = FALSE
+)
+
+pdf(sortie_ma_traduction, width = 6, height = 6)
+par(mar = c(5, 5, 2, 2))
+plot(x, y, type = "n", xlim = c(0, 20), ylim = c(-6, 5), xaxs = "i", yaxs = "i", xaxt = "n", yaxt = "n",
+     xlab = expression(Log[2] ~ "base Mean"), ylab = expression(Log[2] ~ "Fold Change"))
 axis(1, at = seq(0, 20, 2))
 axis(2, at = -6:5, las = 1)
-abline(h = 0, lty = 2)
-points(log2(t$baseMean[t_trna]), t$log2FoldChange[t_trna], cex = 1.3)
-text(log2(t$baseMean[t_facteur]), t$log2FoldChange[t_facteur], t$nom[t_facteur], pos = 3, cex = 0.7)
-legend("bottomleft", c("padj < 0.05", "non significatif", "AA-tRNA synthetases"), pch = c(20, 20, 1), col = c("red", "grey50", "black"), bty = "n")
+abline(h = 0, lty = 2, lwd = 2)
+points(x, y, pch = 16, col = ifelse(t_sig, "red", "grey50"))
+points(x[t_trna], y[t_trna], pch = 1, cex = 1.2, lwd = 1.5)
+for (i in seq_len(nrow(etiquettes))) {
+  j <- which(t$nom == etiquettes$nom[i])
+  if (length(j) == 1) {
+    xt <- x[j] + etiquettes$dx[i]
+    yt <- y[j] + etiquettes$dy[i]
+    segments(x[j], y[j], xt, yt, lwd = 1.5)
+    text(xt, yt, etiquettes$nom[i], font = 3, pos = ifelse(etiquettes$dx[i] < 0, 2, 4), offset = 0.2)
+  }
+}
+legend("bottomleft", c("Significant", "Non-significant"), pch = 16, col = c("red", "grey50"), bty = "n", cex = 0.8)
+legend("bottomright", "AA-tRNA synthetases", pch = 1, pt.lwd = 1.5, text.font = 3, bty = "n", cex = 0.8)
+box(lwd = 2)
 dev.off()

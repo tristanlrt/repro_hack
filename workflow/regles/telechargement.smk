@@ -42,3 +42,14 @@ rule telecharger_kegg:
         url=lambda wildcards: config["kegg"][wildcards.liste]
     shell:
         'wget -q -O {output} "{params.url}"'
+
+rule telecharger_aureowiki:
+    output:
+        "data/ref/aureowiki_noms.tsv"
+    container:
+        config["containers"]["wget"]
+    params:
+        url=config["aureowiki"]["url"],
+        donnees=config["aureowiki"]["donnees"]
+    shell:
+        'wget -q -O {output} --post-data "{params.donnees}" "{params.url}"'
