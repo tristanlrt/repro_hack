@@ -8,10 +8,13 @@ fichier_noms <- args[4]
 fichier_ribosome <- args[5]
 fichier_trna <- args[6]
 fichier_facteurs <- args[7]
-sortie_table <- args[8]
-sortie_resume <- args[9]
-sortie_ma_complet <- args[10]
-sortie_ma_traduction <- args[11]
+fichier_biogenese_ribosome <- args[8]
+fichier_biogenese_trna <- args[9]
+sortie_table <- args[10]
+sortie_resume <- args[11]
+sortie_ma_complet <- args[12]
+sortie_ma_traduction <- args[13]
+sortie_ma_traduction_large <- args[14]
 
 counts <- read.table(fichier_counts, header = TRUE, sep = "\t", comment.char = "#", row.names = 1, check.names = FALSE)
 counts <- counts[, 6:ncol(counts)]
@@ -34,17 +37,24 @@ noms$nom <- ifelse(noms[, 2] == "-", noms[, 3], noms[, 2])
 
 ribosome <- sub("^sao:", "", read.delim(fichier_ribosome, header = FALSE, stringsAsFactors = FALSE)$V2)
 trna <- sub("^sao:", "", read.delim(fichier_trna, header = FALSE, stringsAsFactors = FALSE)$V2)
-lignes_facteurs <- readLines(fichier_facteurs)
-facteurs <- unlist(regmatches(lignes_facteurs, gregexpr("SAOUHSC_[0-9A-Za-z]+", lignes_facteurs)))
+lire_brite <- function(fichier) {
+  lignes <- readLines(fichier)
+  unique(unlist(regmatches(lignes, gregexpr("SAOUHSC_[0-9A-Za-z]+", lignes))))
+}
+facteurs <- lire_brite(fichier_facteurs)
+biogenese <- c(lire_brite(fichier_biogenese_ribosome), lire_brite(fichier_biogenese_trna))
 cds <- genes$id[genes$V2 == "CDS"]
 traduction <- intersect(unique(c(ribosome, trna, facteurs)), cds)
+traduction_large <- intersect(unique(c(ribosome, trna, facteurs, biogenese)), cds)
 
 table <- data.frame(gene = rownames(res), nom = noms$nom[match(rownames(res), noms[, 1])], as.data.frame(res), stringsAsFactors = FALSE)
 table$traduction <- table$gene %in% traduction
+table$traduction_large <- table$gene %in% traduction_large
 write.table(table, sortie_table, sep = "\t", quote = FALSE, row.names = FALSE)
 
 sig <- !is.na(res$padj) & res$padj < 0.05
 trad <- table$traduction
+trad_large <- table$traduction_large
 resume <- c(
   paste("genes", nrow(res)),
   paste("genes testes", sum(!is.na(res$padj))),
@@ -54,7 +64,11 @@ resume <- c(
   paste("genes traduction", sum(trad)),
   paste("genes traduction DEG", sum(trad & sig)),
   paste("genes traduction up", sum(trad & sig & res$log2FoldChange > 0)),
-  paste("genes traduction down", sum(trad & sig & res$log2FoldChange < 0))
+  paste("genes traduction down", sum(trad & sig & res$log2FoldChange < 0)),
+  paste("genes traduction large", sum(trad_large)),
+  paste("genes traduction large DEG", sum(trad_large & sig)),
+  paste("genes traduction large up", sum(trad_large & sig & res$log2FoldChange > 0)),
+  paste("genes traduction large down", sum(trad_large & sig & res$log2FoldChange < 0))
 )
 writeLines(resume, sortie_resume)
 
@@ -83,38 +97,43 @@ axis(1, at = 10^c(0, 2, 4), labels = expression(10^0, 10^2, 10^4), col = NA, col
 axis(2, at = seq(-4, 4, 2), las = 1, col = NA, col.ticks = "grey40")
 dev.off()
 
-t <- table[trad & !is.na(table$baseMean) & table$baseMean > 0, ]
-t_sig <- !is.na(t$padj) & t$padj < 0.05
-t_trna <- t$gene %in% trna
-x <- log2(t$baseMean)
-y <- t$log2FoldChange
+ma_traduction <- function(liste, fichier) {
+  t <- table[liste & !is.na(table$baseMean) & table$baseMean > 0, ]
+  t_sig <- !is.na(t$padj) & t$padj < 0.05
+  t_trna <- t$gene %in% trna
+  x <- log2(t$baseMean)
+  y <- t$log2FoldChange
 
-etiquettes <- data.frame(
-  nom = c("frr", "infA", "tsf", "infC", "infB", "pth"),
-  dx = c(-1.5, -1, 2, 3, 3, -4),
-  dy = c(2, 2.5, 1.5, 0, -0.5, -0.5),
-  stringsAsFactors = FALSE
-)
+  etiquettes <- data.frame(
+    nom = c("frr", "infA", "tsf", "infC", "infB", "pth"),
+    dx = c(-1.5, -1, 2, 3, 3, -4),
+    dy = c(2, 2.5, 1.5, 0, -0.5, -0.5),
+    stringsAsFactors = FALSE
+  )
 
-pdf(sortie_ma_traduction, width = 6, height = 6)
-par(mar = c(5, 5, 2, 2))
-plot(x, y, type = "n", xlim = c(0, 20), ylim = c(-6, 5), xaxs = "i", yaxs = "i", xaxt = "n", yaxt = "n",
-     xlab = expression(Log[2] ~ "base Mean"), ylab = expression(Log[2] ~ "Fold Change"))
-axis(1, at = seq(0, 20, 2))
-axis(2, at = -6:5, las = 1)
-abline(h = 0, lty = 2, lwd = 2)
-points(x, y, pch = 16, col = ifelse(t_sig, "red", "grey50"))
-points(x[t_trna], y[t_trna], pch = 1, cex = 1.2, lwd = 1.5)
-for (i in seq_len(nrow(etiquettes))) {
-  j <- which(t$nom == etiquettes$nom[i])
-  if (length(j) == 1) {
-    xt <- x[j] + etiquettes$dx[i]
-    yt <- y[j] + etiquettes$dy[i]
-    segments(x[j], y[j], xt, yt, lwd = 1.5)
-    text(xt, yt, etiquettes$nom[i], font = 3, pos = ifelse(etiquettes$dx[i] < 0, 2, 4), offset = 0.2)
+  pdf(fichier, width = 6, height = 6)
+  par(mar = c(5, 5, 2, 2))
+  plot(x, y, type = "n", xlim = c(0, 20), ylim = c(-6, 5), xaxs = "i", yaxs = "i", xaxt = "n", yaxt = "n",
+       xlab = expression(Log[2] ~ "base Mean"), ylab = expression(Log[2] ~ "Fold Change"))
+  axis(1, at = seq(0, 20, 2))
+  axis(2, at = -6:5, las = 1)
+  abline(h = 0, lty = 2, lwd = 2)
+  points(x, y, pch = 16, col = ifelse(t_sig, "red", "grey50"))
+  points(x[t_trna], y[t_trna], pch = 1, cex = 1.2, lwd = 1.5)
+  for (i in seq_len(nrow(etiquettes))) {
+    j <- which(t$nom == etiquettes$nom[i])
+    if (length(j) == 1) {
+      xt <- x[j] + etiquettes$dx[i]
+      yt <- y[j] + etiquettes$dy[i]
+      segments(x[j], y[j], xt, yt, lwd = 1.5)
+      text(xt, yt, etiquettes$nom[i], font = 3, pos = ifelse(etiquettes$dx[i] < 0, 2, 4), offset = 0.2)
+    }
   }
+  legend("bottomleft", c("Significant", "Non-significant"), pch = 16, col = c("red", "grey50"), bty = "n", cex = 0.8)
+  legend("bottomright", "AA-tRNA synthetases", pch = 1, pt.lwd = 1.5, text.font = 3, bty = "n", cex = 0.8)
+  box(lwd = 2)
+  dev.off()
 }
-legend("bottomleft", c("Significant", "Non-significant"), pch = 16, col = c("red", "grey50"), bty = "n", cex = 0.8)
-legend("bottomright", "AA-tRNA synthetases", pch = 1, pt.lwd = 1.5, text.font = 3, bty = "n", cex = 0.8)
-box(lwd = 2)
-dev.off()
+
+ma_traduction(trad, sortie_ma_traduction)
+ma_traduction(trad_large, sortie_ma_traduction_large)
