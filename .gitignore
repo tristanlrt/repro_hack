@@ -6,3 +6,5 @@ logs/
 *.sif
 .DS_Store
 *.log
+.ncbi/
+.wget-hsts
