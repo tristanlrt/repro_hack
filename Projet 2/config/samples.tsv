@@ -1,0 +1,13 @@
+sample	code	infection	jour	replicat
+SRR7657878	T111	infecte	d11	1
+SRR7657881	T112	infecte	d11	2
+SRR7657880	T113	infecte	d11	3
+SRR7657877	C111	controle	d11	1
+SRR7657876	C112	controle	d11	2
+SRR7657879	C113	controle	d11	3
+SRR7657874	T331	infecte	d33	1
+SRR7657873	T332	infecte	d33	2
+SRR7657872	T333	infecte	d33	3
+SRR7657883	C331	controle	d33	1
+SRR7657882	C332	controle	d33	2
+SRR7657875	C333	controle	d33	3

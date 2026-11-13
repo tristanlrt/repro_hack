@@ -1,0 +1,10 @@
+data/
+results/
+logs/
+.snakemake/
+*.img
+*.sif
+.DS_Store
+*.log
+.ncbi/
+.wget-hsts

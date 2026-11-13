@@ -1,0 +1,58 @@
+# =============================================================================
+# Configuration du Projet 2 : cerveau de souris infectée par T. gondii
+# (Hu et al. 2020, Front. Microbiol. 11:570903)
+# =============================================================================
+
+samples: "config/samples.tsv"
+
+threads: 4
+
+# -----------------------------------------------------------------------------
+#  A modifiier pour passer de Mode test / Mode complet (les dossiers de sortie change de nom en fonction du mode)
+# -----------------------------------------------------------------------------
+# chromosome : "19" => on ne télécharge que le chromosome 19 (génome + GFF3)
+#              ""   => génome complet (toplevel, ~2.7 Gb, index Salmon lourd)
+# max_spots  : nombre de paires de lectures téléchargées par échantillon
+#              (fastq-dump -X). 0 => toutes les lectures (~33 M paires/échantillon).
+#
+# Pour l'analyse finale : chromosome: "" et max_spots: 0
+chromosome: "19"
+max_spots: 2000000
+
+# -----------------------------------------------------------------------------
+# Génome de Référence : GRCm38 (p6), Ensembl release 100, comme indiqué dans l'article
+# -----------------------------------------------------------------------------
+ensembl:
+  base: "https://ftp.ensembl.org/pub/release-100"
+
+# -----------------------------------------------------------------------------
+# Trimmomatic v0.39
+# -----------------------------------------------------------------------------
+# L'article dit seulement "Adaptor sequences and low-quality reads were removed
+# using Trimmomatic (v.0.39)".Posons une hypothèse : paramètres recommandés par le manuel
+# Trimmomatic pour des données Illumina PE (librairie NEBNext Ultra = adaptateurs
+# compatibles TruSeq).
+trimmomatic:
+  adaptateurs: "config/TruSeq3-PE-2.fa"
+  options: "LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
+  illuminaclip: "2:30:10:2:True"
+
+# -----------------------------------------------------------------------------
+# Salmon v1.2.0
+# -----------------------------------------------------------------------------
+salmon:
+  kmer: 31            # valeur par défaut, adaptée aux lectures de 150 pb
+  decoys: true        # index "decoy-aware" (génome utilisé comme leurre)
+  libtype: "A"        # détection automatique du type de librairie
+  # "bias-aware quantification" dans l'article => correction des biais
+  quant_options: "--validateMappings --seqBias --gcBias"
+
+# -----------------------------------------------------------------------------
+# Conteneurs (Damona / Zenodo)
+# -----------------------------------------------------------------------------
+containers:
+  sratoolkit: "https://zenodo.org/record/10894351/files/sratoolkit_3.1.0.img"
+  wget: "https://zenodo.org/record/14415567/files/wget_1.24.5.img"
+  trimmomatic: "https://zenodo.org/record/22145522/files/trimmomatic_0.39.0.img"
+  salmon: "https://zenodo.org/record/22144681/files/salmon_1.2.0.img"
+  gffread: "https://zenodo.org/record/8037039/files/gffread_0.12.7.img"
