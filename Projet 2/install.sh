@@ -2,10 +2,13 @@
 set -e
 
 if ! command -v apptainer > /dev/null; then
-    wget -q -O /tmp/apptainer.deb https://github.com/apptainer/apptainer/releases/download/v1.5.5/apptainer_1.5.5_amd64.deb
     sudo apt-get update
-    sudo apt-get install -y /tmp/apptainer.deb
-    rm /tmp/apptainer.deb
+    # Ubuntu >= 26.04 fournit apptainer ; sinon le .deb officiel (incompatible avec 26.04 : libfuse3-3/libsubid4 renommées)
+    if ! sudo apt-get install -y apptainer; then
+        wget -q -O /tmp/apptainer.deb https://github.com/apptainer/apptainer/releases/download/v1.5.5/apptainer_1.5.5_amd64.deb
+        sudo apt-get install -y /tmp/apptainer.deb
+        rm /tmp/apptainer.deb
+    fi
 fi
 
 if ! command -v conda > /dev/null; then

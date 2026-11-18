@@ -4,4 +4,5 @@ if ! command -v conda > /dev/null; then
 fi
 source "$(conda info --base)/etc/profile.d/conda.sh"
 conda activate snakemake
-snakemake --software-deployment-method apptainer --cores $(nproc) "$@"
+# Images hors du projet : Snakemake ne met pas leur chemin entre guillemets, donc un espace ("Projet 2") casse apptainer
+snakemake --software-deployment-method apptainer --apptainer-prefix "$HOME/.cache/apptainer-images" --cores $(nproc) "$@"
