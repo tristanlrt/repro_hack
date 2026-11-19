@@ -12,7 +12,7 @@ Ensembl 100 (GRCm38) ─> gffread ─> salmon index (decoys)
 ## Lancer le test (chromosome 19)
 
 ```bash
-cd "Projet 2"
+cd Projet_2
 ./install.sh          # une seule fois : Apptainer + Snakemake 9.27.1 (conda)
 ./run.sh -n           # dry-run : affiche les tâches sans rien exécuter
 ./run.sh              # exécution
