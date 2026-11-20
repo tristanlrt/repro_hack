@@ -1,14 +1,11 @@
-# =============================================================================
-# Workflow Projet 2 : téléchargement -> Trimmomatic -> index Salmon -> salmon quant
-# Lancement : ./run.sh   (depuis le dossier Projet_2)
-# =============================================================================
+# workflow 2 : téléchargement -> Trimmomatic -> index Salmon -> salmon quant
+# lancement ./run.sh  Projet_2
 import pandas as pd
 
 configfile: "config/config.yaml"
 
 SAMPLES = pd.read_csv(config["samples"], sep="\t")["sample"].tolist()
 
-# --- Référence : un chromosome (test) ou le génome complet -------------------
 CHROM = str(config["chromosome"]).strip()
 BASE = config["ensembl"]["base"]
 if CHROM:
@@ -20,9 +17,6 @@ else:
     GENOME_URL = f"{BASE}/fasta/mus_musculus/dna/Mus_musculus.GRCm38.dna.toplevel.fa.gz"
     GFF_URL = f"{BASE}/gff3/mus_musculus/Mus_musculus.GRCm38.100.gff3.gz"
 
-# --- Lectures : sous-échantillon (test) ou totalité ---------------------------
-# Le nom du dossier dépend du sous-échantillonnage pour ne jamais mélanger
-# des lectures de test avec des lectures complètes.
 MAX_SPOTS = int(config["max_spots"])
 LECTURES = f"sub{MAX_SPOTS}" if MAX_SPOTS > 0 else "complet"
 

@@ -1,11 +1,7 @@
-# =============================================================================
-# Quantification par transcrit : salmon quant (Salmon v1.2.0)
-# =============================================================================
-# -l A : Salmon détecte le type de librairie (le type retenu est écrit dans
-#        lib_format_counts.json ; NEBNext Ultra non directionnel => attendu IU).
-# Le taux de lectures assignées est dans aux_info/meta_info.json ("percent_mapped").
-# En mode test (chr19 seul) ce taux est faible (~3-5 %) : c'est normal, la
-# majorité des lectures viennent des autres chromosomes.
+# Quantification par transcrit 
+# -l A = type de librairie auto (attendu IU) -> lib_format_counts.json
+# Taux d'assignation -> aux_info/meta_info.json (percent_mapped)
+# Test chr19 = taux ~3-5 %, normal
 
 rule quantifier:
     input:

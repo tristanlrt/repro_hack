@@ -1,11 +1,6 @@
-# =============================================================================
-# Nettoyage des lectures : Trimmomatic v0.39 (mode paired-end)
-# =============================================================================
-# Sorties : paires conservées (_1P/_2P, utilisées par Salmon) et lectures
-# orphelines (_1U/_2U, temporaires : supprimées une fois la quantification faite).
-# ILLUMINACLIP:<adaptateurs>:2:30:10:2:True = coupe les adaptateurs TruSeq
-# (keepBothReads=True conserve la lecture R2 même si elle est le reverse
-# complément de R1, recommandé par le manuel pour les petits inserts).
+# Nettoyage 
+# _1P/_2P = paires gardées ; _1U/_2U = orphelines, temporaires
+# keepBothReads=True = garde R2 si petit insert (manuel)
 
 rule trimmer:
     input:

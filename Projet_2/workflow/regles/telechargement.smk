@@ -1,10 +1,7 @@
-# =============================================================================
-# Téléchargement des lectures (SRA) et de la référence (Ensembl release 100)
-# =============================================================================
+# Téléchargement lectures (SRA) et référence (Ensembl 100)
 
-# Lectures paired-end 2x150 pb (LibraryLayout = PAIRED dans le run selector SRA).
-# - mode test   : fastq-dump -X <N> ne récupère que les N premières paires
-# - mode complet: fasterq-dump (plus rapide) puis compression gzip
+# Lectures paired-end 2x150
+# Test = fastq-dump -X (N premières paires) ; complet = fasterq-dump + gzip
 rule telecharger_fastq:
     output:
         r1="data/raw/{lect}/{srr}_1.fastq.gz",
@@ -28,7 +25,7 @@ rule telecharger_fastq:
         """
 
 
-# Génome (FASTA) et annotation (GFF3), compressés
+# FASTA
 rule telecharger_genome:
     output:
         f"data/ref/{REF}/genome.fa.gz"
@@ -40,6 +37,7 @@ rule telecharger_genome:
         'wget -q -O {output} "{params.url}"'
 
 
+# GFF3
 rule telecharger_annotation:
     output:
         f"data/ref/{REF}/annotation.gff3.gz"
@@ -51,10 +49,8 @@ rule telecharger_annotation:
         'wget -q -O {output} "{params.url}"'
 
 
-# gffread ne lit pas les fichiers compressés : on décompresse.
-# On génère aussi la liste des séquences "leurres" (decoys) pour Salmon :
-# ce sont les noms des chromosomes du génome (premier mot des en-têtes FASTA).
-# (conteneur sratoolkit utilisé car il fournit gzip/grep/sed, déjà validé au Projet 1)
+#  noms des chromosomes
+# Conteneur sratoolkit = fournit gzip / grep / sed
 rule preparer_reference:
     input:
         genome=f"data/ref/{REF}/genome.fa.gz",

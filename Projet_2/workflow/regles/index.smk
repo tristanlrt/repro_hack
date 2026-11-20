@@ -1,10 +1,6 @@
-# =============================================================================
-# Transcriptome (gffread) et index Salmon v1.2.0
-# =============================================================================
+# Transcriptome (gffread) + index Salmon 1.2.0
 
-# Extraction des séquences de transcrits (cDNA) à partir du génome + GFF3.
-# -w : écrit la séquence épissée (exons concaténés) de chaque transcrit.
-# Les identifiants sont ceux du GFF3 Ensembl (ENSMUST...).
+# Transcrits = exons concaténés (gffread -w), identifiants ENSMUST
 rule construire_transcriptome:
     input:
         genome=f"data/ref/{REF}/genome.fa",
@@ -17,10 +13,8 @@ rule construire_transcriptome:
         "gffread -w {output} -g {input.genome} {input.gff}"
 
 
-# Index Salmon "decoy-aware" : le génome est ajouté à la fin des transcrits
-# (gentrome) et déclaré comme leurre. Cela évite d'attribuer à tort à un
-# transcrit des lectures venant de régions non annotées (recommandation Salmon).
-# Si decoys: false dans la config, on indexe uniquement le transcriptome.
+# Index avec decoys : transcrits + génome (gentrome), génome = leurre
+# decoys: false -> transcrits seuls
 rule indexer_salmon:
     input:
         transcrits=f"data/ref/{REF}/transcriptome.fa",
