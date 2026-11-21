@@ -33,6 +33,7 @@ rule indexer_salmon:
     container:
         config["containers"]["salmon"]
     threads: config["threads"]
+    priority: 3
     params:
         kmer=config["salmon"]["kmer"],
         decoys="true" if config["salmon"]["decoys"] else "false",

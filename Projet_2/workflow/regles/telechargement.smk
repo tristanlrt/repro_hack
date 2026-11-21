@@ -5,10 +5,12 @@
 # Lectures paired-end 2x150 pb (LibraryLayout = PAIRED dans le run selector SRA).
 # - mode test   : fastq-dump -X <N> ne récupère que les N premières paires
 # - mode complet: fasterq-dump (plus rapide) puis compression gzip
+# temp() : FASTQ bruts supprimés dès que Trimmomatic les a nettoyés (place disque).
+# Pour les garder : ./run.sh --notemp
 rule telecharger_fastq:
     output:
-        r1="data/raw/{lect}/{srr}_1.fastq.gz",
-        r2="data/raw/{lect}/{srr}_2.fastq.gz"
+        r1=temp("data/raw/{lect}/{srr}_1.fastq.gz"),
+        r2=temp("data/raw/{lect}/{srr}_2.fastq.gz")
     container:
         config["containers"]["sratoolkit"]
     threads: config["threads"]
