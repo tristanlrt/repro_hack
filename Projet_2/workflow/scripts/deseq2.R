@@ -84,7 +84,7 @@ print(table(samples$infection, samples$jour))
 # approches, et le choix principal (config deseq2: modele) sert aux tables
 # et au diagramme de Venn. L'autre sert de comparaison dans le rapport.
 #  - "separe" : un DESeq2 par temps, sur ses 6 échantillons (~ infection).
-#               Correspond aux « two pair-wise comparisons » de l'article.
+#               L'article ne précise pas le design : les deux sont calculés.
 #  - "global" : un seul DESeq2 sur les 12 échantillons (~ groupe, 4 niveaux),
 #               puis un contraste par temps. Équivalent au modèle avec
 #               interaction ~ infection * jour pour ces deux contrastes.

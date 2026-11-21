@@ -42,7 +42,7 @@ trimmomatic:
 # -----------------------------------------------------------------------------
 salmon:
   kmer: 31            # valeur par défaut, adaptée aux lectures de 150 pb
-  decoys: true        # index "decoy-aware" (génome utilisé comme leurre)
+  decoys: false       # pas de leurres : index du transcriptome seul (génome entier trop lourd)
   libtype: "A"        # détection automatique du type de librairie
   # "bias-aware quantification" dans l'article => correction des biais
   quant_options: "--validateMappings --seqBias --gcBias"
