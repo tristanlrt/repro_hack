@@ -1,6 +1,6 @@
 # =============================================================================
 # Workflow Projet 2 : téléchargement -> Trimmomatic -> index Salmon -> salmon quant -> DESeq2
-# Lancement : ./run.sh   (depuis le dossier du Projet 2)
+# Lancement : ./run.sh   (depuis le dossier Projet_2)
 # =============================================================================
 import pandas as pd
 
