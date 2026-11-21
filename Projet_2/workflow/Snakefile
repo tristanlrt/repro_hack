@@ -1,6 +1,6 @@
 # =============================================================================
-# Workflow Projet 2 : téléchargement -> Trimmomatic -> index Salmon -> salmon quant
-# Lancement : ./run.sh   (depuis le dossier "Projet 2")
+# Workflow Projet 2 : téléchargement -> Trimmomatic -> index Salmon -> salmon quant -> DESeq2
+# Lancement : ./run.sh   (depuis le dossier du Projet 2)
 # =============================================================================
 import pandas as pd
 
@@ -30,7 +30,10 @@ include: "regles/telechargement.smk"
 include: "regles/trimming.smk"
 include: "regles/index.smk"
 include: "regles/quantification.smk"
+include: "regles/deseq2.smk"
 
 rule all:
     input:
-        expand("results/salmon/{ref}_{lect}/{srr}/quant.sf", ref=REF, lect=LECTURES, srr=SAMPLES)
+        expand("results/salmon/{ref}_{lect}/{srr}/quant.sf", ref=REF, lect=LECTURES, srr=SAMPLES),
+        expand("results/deseq2/{ref}_{lect}/comparaison_article.tsv", ref=REF, lect=LECTURES),
+        expand("results/deseq2/{ref}_{lect}/venn_dets.pdf", ref=REF, lect=LECTURES)
