@@ -32,6 +32,7 @@ rule telecharger_fastq:
 
 # Génome (FASTA) et annotation (GFF3), compressés
 rule telecharger_genome:
+    priority: 3
     output:
         f"data/ref/{REF}/genome.fa.gz"
     container:
@@ -43,6 +44,7 @@ rule telecharger_genome:
 
 
 rule telecharger_annotation:
+    priority: 3
     output:
         f"data/ref/{REF}/annotation.gff3.gz"
     container:
@@ -58,6 +60,7 @@ rule telecharger_annotation:
 # ce sont les noms des chromosomes du génome (premier mot des en-têtes FASTA).
 # (conteneur sratoolkit utilisé car il fournit gzip/grep/sed, déjà validé au Projet 1)
 rule preparer_reference:
+    priority: 3
     input:
         genome=f"data/ref/{REF}/genome.fa.gz",
         gff=f"data/ref/{REF}/annotation.gff3.gz"

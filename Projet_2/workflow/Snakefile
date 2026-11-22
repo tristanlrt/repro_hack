@@ -9,7 +9,7 @@ configfile: "config/config.yaml"
 SAMPLES = pd.read_csv(config["samples"], sep="\t")["sample"].tolist()
 
 # --- Référence : un chromosome (test) ou le génome complet -------------------
-CHROM = str(config["chromosome"]).strip()
+CHROM = str(config["chromosome"] or "").strip()   # --config chromosome="" donne None
 BASE = config["ensembl"]["base"]
 if CHROM:
     REF = f"chr{CHROM}"

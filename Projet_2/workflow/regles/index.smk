@@ -6,6 +6,7 @@
 # -w : écrit la séquence épissée (exons concaténés) de chaque transcrit.
 # Les identifiants sont ceux du GFF3 Ensembl (ENSMUST...).
 rule construire_transcriptome:
+    priority: 3
     input:
         genome=f"data/ref/{REF}/genome.fa",
         gff=f"data/ref/{REF}/annotation.gff3"
