@@ -3,10 +3,10 @@
 # Objectif : reproduire la Fig. 2B de Hu et al. (2020), c'est-à-dire les
 # transcrits différentiels (DETs) infecté vs contrôle à 11 et 33 dpi.
 #
-# Valeurs de l'article (section Résultats) :
+# Valeurs de l'article (section Résultats et Fig. 2B) :
 #   11 dpi : 936 DETs (789 up, 147 down)
 #   33 dpi : 2 081 DETs (1 908 up, 173 down)
-#   communs aux deux temps : 618 up, 6 down
+#   communs aux deux temps : 618 up, 6 down ; sens inversé : 2 + 2
 #
 # Appelé par la règle deseq2 (workflow/regles/deseq2.smk) :
 #   Rscript deseq2.R <samples.tsv> <sorties x5> <modele> <colonne_p>
@@ -150,11 +150,13 @@ compter <- function(r11, r33, col) {
   u33 <- liste_dets(r33, col, "up");   d33 <- liste_dets(r33, col, "down")
   c(d11_total = length(u11) + length(d11), d11_up = length(u11), d11_down = length(d11),
     d33_total = length(u33) + length(d33), d33_up = length(u33), d33_down = length(d33),
-    communs_up = length(intersect(u11, u33)), communs_down = length(intersect(d11, d33)))
+    communs_up = length(intersect(u11, u33)), communs_down = length(intersect(d11, d33)),
+    up11_down33 = length(intersect(u11, d33)), down11_up33 = length(intersect(d11, u33)))
 }
 lignes <- list(article = c(d11_total = 936, d11_up = 789, d11_down = 147,
                            d33_total = 2081, d33_up = 1908, d33_down = 173,
-                           communs_up = 618, communs_down = 6))
+                           communs_up = 618, communs_down = 6,
+                           up11_down33 = 2, down11_up33 = 2))
 for (m in c("separe", "global")) {
   for (col in c("pvalue", "padj")) {
     lignes[[paste(m, col, sep = "_")]] <- compter(resultats[[m]][["d11"]], resultats[[m]][["d33"]], col)
@@ -167,32 +169,61 @@ print(comparaison, row.names = FALSE)
 
 
 # -----------------------------------------------------------------------------
-# 7. Diagramme de Venn (Fig. 2B) : up et down, 11 dpi vs 33 dpi
+# 7. Diagramme de Venn (Fig. 2B) : 4 ensembles, comme dans l'article
 # -----------------------------------------------------------------------------
+# Les 4 listes (up et down, à 11 et 33 dpi) sur un seul Venn à 4 ellipses :
+# il montre aussi les transcrits qui changent de sens entre les deux temps.
+# À gauche nos chiffres, à droite ceux de la Fig. 2B, aux mêmes positions.
 # Dessiné en R de base (aucun paquet supplémentaire dans le conteneur).
-# Sous chaque diagramme : les mêmes zones dans l'article, pour comparer.
-venn2 <- function(a, b, titre, ref_article) {
+noms <- c("Acute_up", "Acute_down", "Chronic_up", "Chronic_down")
+ellipses <- data.frame(x = c(0.35, 0.47, 0.53, 0.65), y = c(0.45, 0.55, 0.55, 0.45),
+                       a = 0.36, b = 0.19, angle = c(-50, -50, 50, 50))
+dans_ellipse <- function(px, py, e) {
+  t <- -e$angle * pi / 180
+  dx <- px - e$x; dy <- py - e$y
+  ((dx * cos(t) - dy * sin(t)) / e$a)^2 + ((dx * sin(t) + dy * cos(t)) / e$b)^2 <= 1
+}
+# Position de chaque zone : point de la zone le plus proche de son centre
+grille <- expand.grid(x = seq(0, 1, length.out = 301), y = seq(0, 1, length.out = 301))
+code <- rep(0, nrow(grille))
+for (k in 1:4) code <- code + (2^(k - 1)) * dans_ellipse(grille$x, grille$y, ellipses[k, ])
+positions <- t(sapply(1:15, function(z) {
+  g <- grille[code == z, ]
+  cx <- mean(g$x); cy <- mean(g$y)
+  unlist(g[which.min((g$x - cx)^2 + (g$y - cy)^2), ])
+}))
+# Code de zone = somme des ensembles : Acute_up 1, Acute_down 2, Chronic_up 4, Chronic_down 8
+compter_zones <- function(listes) {
+  tous <- unique(unlist(listes))
+  z <- rep(0, length(tous))
+  for (k in 1:4) z <- z + (2^(k - 1)) * (tous %in% listes[[k]])
+  tabulate(z, nbins = 15)
+}
+article_zones <- rep(0, 15)
+article_zones[c(1, 2, 4, 8, 5, 10, 6, 9)] <- c(169, 139, 1288, 165, 618, 6, 2, 2)
+venn4 <- function(zones, titre) {
   plot.new()
-  plot.window(xlim = c(0, 10), ylim = c(0, 8), asp = 1)
-  cercle <- function(x, col) {
+  plot.window(xlim = c(-0.05, 1.05), ylim = c(0, 1.05), asp = 1)
+  couleurs <- c("#1f78b4", "#e6c229", "#e31a1c", "#33a02c")
+  for (k in 1:4) {
+    e <- ellipses[k, ]
     t <- seq(0, 2 * pi, length.out = 200)
-    polygon(x + 2.6 * cos(t), 4 + 2.6 * sin(t), col = adjustcolor(col, 0.35), border = "grey30")
+    px <- e$a * cos(t); py <- e$b * sin(t); r <- e$angle * pi / 180
+    polygon(e$x + px * cos(r) - py * sin(r), e$y + px * sin(r) + py * cos(r),
+            col = adjustcolor(couleurs[k], 0.25), border = "grey30")
   }
-  cercle(3.8, "#1b9e77")
-  cercle(6.2, "#d95f02")
-  text(c(2.4, 5, 7.6), 4, c(length(setdiff(a, b)), length(intersect(a, b)), length(setdiff(b, a))), cex = 1.3)
-  text(c(3.2, 6.8), 7.2, c("11 dpi", "33 dpi"), font = 2)
-  title(titre)
-  mtext(paste0("Hu et al. 2020 : ", paste(ref_article, collapse = " | ")), side = 1, line = 0, cex = 0.8, col = "grey30")
+  text(positions[, "x"], positions[, "y"], zones, cex = 0.9)
+  text(c(0.08, 0.33, 0.67, 0.92), c(0.93, 1.0, 1.0, 0.93), noms, cex = 0.75, font = 2)
+  title(titre, cex.main = 1)
 }
 res11 <- resultats[[modele]][["d11"]]
 res33 <- resultats[[modele]][["d33"]]
-pdf(sortie_venn, width = 9, height = 4.8)
-par(mfrow = c(1, 2), mar = c(2, 1, 3, 1))
-venn2(liste_dets(res11, colonne_p, "up"), liste_dets(res33, colonne_p, "up"),
-      "Upregulated DETs", c(789 - 618, 618, 1908 - 618))
-venn2(liste_dets(res11, colonne_p, "down"), liste_dets(res33, colonne_p, "down"),
-      "Downregulated DETs", c(147 - 6, 6, 173 - 6))
+nos_zones <- compter_zones(list(liste_dets(res11, colonne_p, "up"), liste_dets(res11, colonne_p, "down"),
+                                liste_dets(res33, colonne_p, "up"), liste_dets(res33, colonne_p, "down")))
+pdf(sortie_venn, width = 11, height = 5.5)
+par(mfrow = c(1, 2), mar = c(1, 1, 3, 1))
+venn4(nos_zones, paste0("Ce workflow (", modele, ", ", colonne_p, " < ", seuil_p, ")"))
+venn4(article_zones, "Hu et al. 2020, Fig. 2B")
 invisible(dev.off())
 
 cat("\n")
