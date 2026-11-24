@@ -9,7 +9,7 @@
 #   communs aux deux temps : 618 up, 6 down ; sens inversé : 2 + 2
 #
 # Appelé par la règle deseq2 (workflow/regles/deseq2.smk) :
-#   Rscript deseq2.R <samples.tsv> <sorties x5> <modele> <colonne_p>
+#   Rscript deseq2.R <samples.tsv> <sorties x6> <modele> <colonne_p>
 #                    <seuil_p> <seuil_lfc> <quant.sf ...>
 # =============================================================================
 
@@ -23,11 +23,12 @@ sortie_d11        <- args[3]
 sortie_d33        <- args[4]
 sortie_comparaison <- args[5]
 sortie_venn       <- args[6]
-modele    <- args[7]               # "separe" ou "global"
-colonne_p <- args[8]               # "pvalue" (brute) ou "padj" (ajustée BH)
-seuil_p   <- as.numeric(args[9])   # 0.05 dans l'article
-seuil_lfc <- as.numeric(args[10])  # 1.5 dans l'article (|log2FC| >= 1.5)
-fichiers_quant <- args[11:length(args)]
+sortie_pca        <- args[7]
+modele    <- args[8]               # "separe" ou "global"
+colonne_p <- args[9]               # "pvalue" (brute) ou "padj" (ajustée BH)
+seuil_p   <- as.numeric(args[10])  # 0.05 dans l'article
+seuil_lfc <- as.numeric(args[11])  # 1.5 dans l'article (|log2FC| >= 1.5)
+fichiers_quant <- args[12:length(args)]
 
 stopifnot(modele %in% c("separe", "global"), colonne_p %in% c("pvalue", "padj"))
 
@@ -225,6 +226,42 @@ par(mfrow = c(1, 2), mar = c(1, 1, 3, 1))
 venn4(nos_zones, paste0("Ce workflow (", modele, ", ", colonne_p, " < ", seuil_p, ")"))
 venn4(article_zones, "Hu et al. 2020, Fig. 2B")
 invisible(dev.off())
+
+# -----------------------------------------------------------------------------
+# 8. PCA des 12 échantillons (contrôle qualité, absente de l'article)
+# -----------------------------------------------------------------------------
+# L'article affirme une « clear separation between infected and control
+# transcriptomes » sans la montrer : la PCA permet de le vérifier.
+# Comptes stabilisés par vst() en mode aveugle (sans utiliser les groupes),
+# puis plotPCA() de DESeq2 sur les 500 transcrits les plus variables.
+# En mode test (chr19), trop peu de transcrits pour vst() : on passe à
+# varianceStabilizingTransformation(), équivalente mais plus lente.
+vsd <- tryCatch(vst(dds_global, blind = TRUE),
+                error = function(e) varianceStabilizingTransformation(dds_global, blind = TRUE))
+pca <- plotPCA(vsd, intgroup = c("infection", "jour"), returnData = TRUE)
+part <- round(100 * attr(pca, "percentVar"))
+pca$code <- samples[rownames(pca), "code"]
+couleur <- ifelse(pca$infection == "infecte", "#d7301f", "#2c7fb8")
+forme <- ifelse(pca$jour == "d11", 16, 17)
+# Textes de la figure sans accents : le conteneur tourne en locale "C".
+pdf(sortie_pca, width = 8, height = 6, useDingbats = FALSE)
+par(mar = c(5, 5, 3, 8))
+marge_x <- diff(range(pca$PC1)) * 0.15
+marge_y <- diff(range(pca$PC2)) * 0.15
+plot(pca$PC1, pca$PC2, col = couleur, pch = forme, cex = 1.8,
+     xlim = range(pca$PC1) + c(-marge_x, marge_x), ylim = range(pca$PC2) + c(-marge_y, marge_y),
+     xlab = paste0("PC1 (", part[1], "% of variance)"),
+     ylab = paste0("PC2 (", part[2], "% of variance)"),
+     main = "PCA of the 12 samples (vst, 500 most variable transcripts)", cex.main = 0.95)
+text(pca$PC1, pca$PC2, pca$code, pos = 3, cex = 0.75, col = "grey30")
+# Légende hors du cadre, pour ne jamais cacher de points
+legend(par("usr")[2], par("usr")[4], xpd = NA, bty = "n", cex = 0.85,
+       legend = c("Infected", "Control", "11 dpi", "33 dpi"),
+       col = c("#d7301f", "#2c7fb8", "grey30", "grey30"), pch = c(15, 15, 16, 17))
+invisible(dev.off())
+cat("\nCoordonnées de la PCA :\n")
+write.table(data.frame(code = pca$code, sample = rownames(pca), PC1 = round(pca$PC1, 2), PC2 = round(pca$PC2, 2)),
+            sep = "\t", quote = FALSE, row.names = FALSE)
 
 cat("\n")
 print(sessionInfo())
