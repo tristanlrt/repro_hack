@@ -13,6 +13,7 @@
 #   resultats_d11.tsv / _d33 résultats DESeq2 complets + colonne DET (up/down/non)
 #   comparaison_article.tsv  nombre de DETs pour 4 variantes vs l'article
 #   venn_dets.pdf            diagramme de Venn (Fig. 2B)
+#   pca.pdf                  PCA des 12 échantillons (contrôle qualité)
 
 rule deseq2:
     input:
@@ -24,7 +25,8 @@ rule deseq2:
         d11="results/deseq2/{ref}_{lect}/resultats_d11.tsv",
         d33="results/deseq2/{ref}_{lect}/resultats_d33.tsv",
         comparaison="results/deseq2/{ref}_{lect}/comparaison_article.tsv",
-        venn="results/deseq2/{ref}_{lect}/venn_dets.pdf"
+        venn="results/deseq2/{ref}_{lect}/venn_dets.pdf",
+        pca="results/deseq2/{ref}_{lect}/pca.pdf"
     log:
         "logs/deseq2/{ref}_{lect}.log"
     container:
@@ -37,7 +39,7 @@ rule deseq2:
     shell:
         """
         Rscript {input.script} {input.samples} \
-            {output.comptes} {output.d11} {output.d33} {output.comparaison} {output.venn} \
+            {output.comptes} {output.d11} {output.d33} {output.comparaison} {output.venn} {output.pca} \
             {params.modele} {params.colonne_p} {params.seuil_p} {params.seuil_lfc} \
             {input.quant} > {log} 2>&1
         """
