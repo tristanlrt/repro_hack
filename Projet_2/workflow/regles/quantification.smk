@@ -15,6 +15,7 @@ rule quantifier:
     container:
         config["containers"]["salmon"]
     threads: config["threads"]
+    priority: 2
     params:
         libtype=config["salmon"]["libtype"],
         options=config["salmon"]["quant_options"],

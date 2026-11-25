@@ -19,9 +19,10 @@ trimmomatic:
 
 # Salmon 1.2.0
 salmon:
-  kmer: 31            
-  decoys: true        
-  libtype: "A"        #autodétection
+  kmer: 31            # valeur par défaut, adaptée aux lectures de 150 pb
+  decoys: false       # pas de leurres : index du transcriptome seul (génome entier trop lourd)
+  libtype: "A"        # détection automatique du type de librairie
+  # "bias-aware quantification" dans l'article => correction des biais
   quant_options: "--validateMappings --seqBias --gcBias"
 
 containers:
@@ -30,3 +31,19 @@ containers:
   trimmomatic: "https://zenodo.org/record/22145522/files/trimmomatic_0.39.0.img"
   salmon: "https://zenodo.org/record/22144681/files/salmon_1.2.0.img"
   gffread: "https://zenodo.org/record/8037039/files/gffread_0.12.7.img"
+  # DESeq2 1.26.0 (R 3.6) : image Biocontainers référencée par Damona
+  deseq2: "docker://quay.io/biocontainers/bioconductor-deseq2:1.26.0--r36he1b5a44_0"
+
+# -----------------------------------------------------------------------------
+# DESeq2 : transcrits différentiels (DETs) infecté vs contrôle, à 11 et 33 dpi
+# -----------------------------------------------------------------------------
+# modele    : "separe" => un DESeq2 par temps (6 échantillons, ~ infection)
+#             "global" => un DESeq2 sur les 12 échantillons (~ groupe), un contraste par temps
+# colonne_p : "pvalue" (brute, Méthodes de l'article) ou "padj" (ajustée, Résultats de l'article)
+# Les deux modèles et les deux p-values sont de toute façon comparés à l'article
+# dans comparaison_article.tsv ; ces deux paramètres choisissent le Venn et les tables.
+deseq2:
+  modele: "separe"
+  colonne_p: "pvalue"
+  seuil_p: 0.05
+  seuil_log2fc: 1.5

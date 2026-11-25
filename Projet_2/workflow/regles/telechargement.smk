@@ -1,11 +1,14 @@
 # Téléchargement lectures (SRA) et référence (Ensembl 100)
 
-# Lectures paired-end 2x150
-# Test = fastq-dump -X (N premières paires) ; complet = fasterq-dump + gzip
+# Lectures paired-end 2x150 pb (LibraryLayout = PAIRED dans le run selector SRA).
+# - mode test   : fastq-dump -X <N> ne récupère que les N premières paires
+# - mode complet: fasterq-dump (plus rapide) puis compression gzip
+# temp() : FASTQ bruts supprimés dès que Trimmomatic les a nettoyés (place disque).
+# Pour les garder : ./run.sh --notemp
 rule telecharger_fastq:
     output:
-        r1="data/raw/{lect}/{srr}_1.fastq.gz",
-        r2="data/raw/{lect}/{srr}_2.fastq.gz"
+        r1=temp("data/raw/{lect}/{srr}_1.fastq.gz"),
+        r2=temp("data/raw/{lect}/{srr}_2.fastq.gz")
     container:
         config["containers"]["sratoolkit"]
     threads: config["threads"]
@@ -27,6 +30,7 @@ rule telecharger_fastq:
 
 # FASTA
 rule telecharger_genome:
+    priority: 3
     output:
         f"data/ref/{REF}/genome.fa.gz"
     container:
@@ -39,6 +43,7 @@ rule telecharger_genome:
 
 # GFF3
 rule telecharger_annotation:
+    priority: 3
     output:
         f"data/ref/{REF}/annotation.gff3.gz"
     container:
@@ -52,6 +57,7 @@ rule telecharger_annotation:
 #  noms des chromosomes
 # Conteneur sratoolkit = fournit gzip / grep / sed
 rule preparer_reference:
+    priority: 3
     input:
         genome=f"data/ref/{REF}/genome.fa.gz",
         gff=f"data/ref/{REF}/annotation.gff3.gz"

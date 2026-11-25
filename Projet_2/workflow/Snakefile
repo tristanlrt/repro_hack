@@ -1,12 +1,15 @@
-# workflow 2 : téléchargement -> Trimmomatic -> index Salmon -> salmon quant
-# lancement ./run.sh  Projet_2
+# =============================================================================
+# Workflow Projet 2 : téléchargement -> Trimmomatic -> index Salmon -> salmon quant -> DESeq2
+# Lancement : ./run.sh   (depuis le dossier Projet_2)
+# =============================================================================
 import pandas as pd
 
 configfile: "config/config.yaml"
 
 SAMPLES = pd.read_csv(config["samples"], sep="\t")["sample"].tolist()
 
-CHROM = str(config["chromosome"]).strip()
+# --- Référence : un chromosome (test) ou le génome complet -------------------
+CHROM = str(config["chromosome"] or "").strip()   # --config chromosome="" donne None
 BASE = config["ensembl"]["base"]
 if CHROM:
     REF = f"chr{CHROM}"
@@ -24,7 +27,10 @@ include: "regles/telechargement.smk"
 include: "regles/trimming.smk"
 include: "regles/index.smk"
 include: "regles/quantification.smk"
+include: "regles/deseq2.smk"
 
 rule all:
     input:
-        expand("results/salmon/{ref}_{lect}/{srr}/quant.sf", ref=REF, lect=LECTURES, srr=SAMPLES)
+        expand("results/salmon/{ref}_{lect}/{srr}/quant.sf", ref=REF, lect=LECTURES, srr=SAMPLES),
+        expand("results/deseq2/{ref}_{lect}/comparaison_article.tsv", ref=REF, lect=LECTURES),
+        expand("results/deseq2/{ref}_{lect}/venn_dets.pdf", ref=REF, lect=LECTURES)

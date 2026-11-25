@@ -2,6 +2,7 @@
 
 # Transcrits = exons concaténés (gffread -w), identifiants ENSMUST
 rule construire_transcriptome:
+    priority: 3
     input:
         genome=f"data/ref/{REF}/genome.fa",
         gff=f"data/ref/{REF}/annotation.gff3"
@@ -27,6 +28,7 @@ rule indexer_salmon:
     container:
         config["containers"]["salmon"]
     threads: config["threads"]
+    priority: 3
     params:
         kmer=config["salmon"]["kmer"],
         decoys="true" if config["salmon"]["decoys"] else "false",
