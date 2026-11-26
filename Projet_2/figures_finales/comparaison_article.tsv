@@ -1,0 +1,6 @@
+variante	d11_total	d11_up	d11_down	d33_total	d33_up	d33_down	communs_up	communs_down	up11_down33	down11_up33
+article	936	789	147	2081	1908	173	618	6	2	2
+separe_pvalue	2354	1592	762	3912	3206	706	985	55	25	35
+separe_padj	946	795	151	2112	1937	175	635	2	4	4
+global_pvalue	2626	1789	837	4041	3348	693	1161	67	26	42
+global_padj	1068	920	148	2073	1860	213	751	8	12	8
