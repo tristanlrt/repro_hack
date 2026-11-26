@@ -15,6 +15,8 @@ sortie_resume <- args[11]
 sortie_ma_complet <- args[12]
 sortie_ma_traduction <- args[13]
 sortie_ma_traduction_large <- args[14]
+sortie_pca <- args[15]
+sortie_volcano <- args[16]
 
 counts <- read.table(fichier_counts, header = TRUE, sep = "\t", comment.char = "#", row.names = 1, check.names = FALSE)
 counts <- counts[, 6:ncol(counts)]
@@ -137,3 +139,61 @@ ma_traduction <- function(liste, fichier) {
 
 ma_traduction(trad, sortie_ma_traduction)
 ma_traduction(trad_large, sortie_ma_traduction_large)
+
+# -----------------------------------------------------------------------------
+# PCA des 6 echantillons (controle qualite)
+# -----------------------------------------------------------------------------
+# Comptes stabilises par vst() en mode aveugle (sans utiliser les groupes),
+# puis plotPCA() de DESeq2 sur les 500 genes les plus variables.
+# Si vst() refuse (trop peu de genes assez exprimes), on passe a
+# varianceStabilizingTransformation(), equivalente mais plus lente.
+# Textes sans accents : le conteneur tourne en locale "C".
+vsd <- tryCatch(vst(dds, blind = TRUE),
+                error = function(e) varianceStabilizingTransformation(dds, blind = TRUE))
+pca <- plotPCA(vsd, intgroup = "condition", returnData = TRUE)
+part <- round(100 * attr(pca, "percentVar"))
+nom_ech <- paste0(ifelse(samples[rownames(pca), "condition"] == "persister", "P", "C"),
+                  samples[rownames(pca), "replicate"])
+couleur_pca <- ifelse(pca$condition == "persister", "#d7301f", "#2c7fb8")
+
+pdf(sortie_pca, width = 7, height = 6, useDingbats = FALSE)
+par(mar = c(5, 5, 3, 8))
+marge_x <- diff(range(pca$PC1)) * 0.15
+marge_y <- diff(range(pca$PC2)) * 0.15
+plot(pca$PC1, pca$PC2, col = couleur_pca, pch = 16, cex = 1.8,
+     xlim = range(pca$PC1) + c(-marge_x, marge_x), ylim = range(pca$PC2) + c(-marge_y, marge_y),
+     xlab = paste0("PC1 (", part[1], "% of variance)"),
+     ylab = paste0("PC2 (", part[2], "% of variance)"),
+     main = "PCA of the 6 samples (vst, 500 most variable genes)", cex.main = 0.95)
+text(pca$PC1, pca$PC2, nom_ech, pos = 3, cex = 0.8, col = "grey30")
+legend(par("usr")[2], par("usr")[4], xpd = NA, bty = "n", cex = 0.85,
+       legend = c("Persister", "Control"), col = c("#d7301f", "#2c7fb8"), pch = 16)
+invisible(dev.off())
+
+# -----------------------------------------------------------------------------
+# Volcano plot : log2 fold change vs -log10(padj)
+# -----------------------------------------------------------------------------
+# Memes seuils que le reste de l'analyse : DEG = padj < 0.05.
+# Les genes de la traduction (liste large) sont entoures, comme sur les MA-plots.
+# Les padj = 0 (ou tres petits) sont plafonnes pour rester dans le cadre.
+v <- table[!is.na(table$padj) & !is.na(table$log2FoldChange), ]
+v_sig <- v$padj < 0.05
+v_y <- -log10(pmax(v$padj, 1e-300))
+plafond <- max(v_y[is.finite(v_y)])
+
+pdf(sortie_volcano, width = 7, height = 6, useDingbats = FALSE)
+par(mar = c(5, 5, 3, 2))
+plot(v$log2FoldChange, v_y, pch = 16, cex = 0.5,
+     col = ifelse(v_sig, rgb(0.84, 0.19, 0.12, 0.6), rgb(0.5, 0.5, 0.5, 0.5)),
+     ylim = c(0, plafond * 1.05),
+     xlab = expression(log[2] ~ "fold change (persister / control)"),
+     ylab = expression(-log[10] ~ "adjusted p-value"),
+     main = "Volcano plot (DESeq2, persister vs control)", cex.main = 0.95)
+abline(h = -log10(0.05), lty = 2, col = "grey40")
+abline(v = 0, lty = 3, col = "grey60")
+points(v$log2FoldChange[v$traduction_large], v_y[v$traduction_large], pch = 1, cex = 0.9, lwd = 1.2)
+legend("topleft", bty = "n", cex = 0.8,
+       legend = c(paste0("padj < 0.05 (", sum(v_sig), ")"), "Not significant", "Translation genes", "padj = 0.05"),
+       col = c(rgb(0.84, 0.19, 0.12), "grey50", "black", "grey40"),
+       pch = c(16, 16, 1, NA), lty = c(NA, NA, NA, 2))
+invisible(dev.off())

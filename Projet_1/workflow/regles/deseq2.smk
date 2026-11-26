@@ -14,8 +14,10 @@ rule deseq2:
         resume="results/deseq2/resume.txt",
         ma_complet="results/figures/ma_plot_complet.pdf",
         ma_traduction="results/figures/ma_plot_traduction.pdf",
-        ma_traduction_large="results/figures/ma_plot_traduction_large.pdf"
+        ma_traduction_large="results/figures/ma_plot_traduction_large.pdf",
+        pca="results/figures/pca.pdf",
+        volcano="results/figures/volcano_plot.pdf"
     container:
         config["containers"]["deseq2"]
     shell:
-        "Rscript workflow/scripts/deseq2.R {input.counts} {input.samples} {input.genes} {input.noms} {input.ribosome} {input.trna} {input.facteurs} {input.biogenese_ribosome} {input.biogenese_trna} {output.table} {output.resume} {output.ma_complet} {output.ma_traduction} {output.ma_traduction_large}"
+        "Rscript workflow/scripts/deseq2.R {input.counts} {input.samples} {input.genes} {input.noms} {input.ribosome} {input.trna} {input.facteurs} {input.biogenese_ribosome} {input.biogenese_trna} {output.table} {output.resume} {output.ma_complet} {output.ma_traduction} {output.ma_traduction_large} {output.pca} {output.volcano}"

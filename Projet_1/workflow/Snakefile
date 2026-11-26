@@ -16,4 +16,6 @@ rule all:
         "results/deseq2/resultats_deseq2.tsv",
         "results/figures/ma_plot_complet.pdf",
         "results/figures/ma_plot_traduction.pdf",
-        "results/figures/ma_plot_traduction_large.pdf"
+        "results/figures/ma_plot_traduction_large.pdf",
+        "results/figures/pca.pdf",
+        "results/figures/volcano_plot.pdf"
